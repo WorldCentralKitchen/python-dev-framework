@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-01-03
+
+### Fixed
+
+- Duplicate hooks file error when installed from marketplace (removed explicit `hooks` field from manifest since `hooks/hooks.json` is auto-loaded)
+
 ## [0.5.2] - 2026-01-03
 
 ### Fixed
@@ -100,7 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TDD-001 through TDD-006 documenting implementation details
 - README with installation and configuration instructions
 
-[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.4.0...v0.5.0
