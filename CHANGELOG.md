@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-01-02
+
+### Added
+
+- Design patterns skill with Pythonic GoF patterns, SOLID principles, anti-patterns
+- Pattern Decision Table for quick pattern selection
+- ADR-014 documenting design patterns skill decisions
+
+### Changed
+
+- Condensed skill content for LLM context efficiency (71% reduction)
+
 ## [0.2.0] - 2026-01-02
 
 ### Added
