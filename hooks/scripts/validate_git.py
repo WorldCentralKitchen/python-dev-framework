@@ -156,14 +156,33 @@ def extract_push_target(command: str) -> tuple[str | None, str | None]:
     return match.group(1), match.group(2)
 
 
+def parse_refspec_destination(refspec: str) -> str:
+    """Extract destination branch from refspec.
+
+    Handles formats: 'branch', 'src:dst', 'HEAD:dst', '+src:dst'
+    """
+    # Remove leading + (force push indicator)
+    spec = refspec.lstrip("+")
+
+    # If contains colon, destination is after the colon
+    if ":" in spec:
+        return spec.split(":", 1)[1]
+
+    # Otherwise the refspec itself is the branch
+    return spec
+
+
 def validate_push(refspec: str | None, cwd: str) -> tuple[bool, str | None]:
     """Validate push target.
 
     Returns (is_valid, error_message).
     """
     # Determine target branch
-    target: str | None = refspec
-    if target is None:
+    target: str | None = None
+
+    if refspec is not None:
+        target = parse_refspec_destination(refspec)
+    else:
         # Bare push - check current branch
         target = get_current_branch(cwd)
 
