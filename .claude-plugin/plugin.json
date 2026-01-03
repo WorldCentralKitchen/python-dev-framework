@@ -8,6 +8,6 @@
   "repository": "https://github.com/WorldCentralKitchen/python-dev-framework",
   "license": "MIT",
   "keywords": ["python", "linting", "formatting", "git-workflow", "type-checking"],
-  "hooks": "./hooks/hooks.json",
+  "hooks": "../hooks/hooks.json",
   "lspServers": "./.lsp.json"
 }
