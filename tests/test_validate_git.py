@@ -20,6 +20,7 @@ from config import PluginConfig
 from validate_git import (
     build_branch_pattern,
     build_commit_pattern,
+    contains_gh_pr_merge,
     extract_branch_name,
     extract_commit_message,
     extract_push_target,
@@ -29,6 +30,7 @@ from validate_git import (
     read_stdin_context,
     validate_branch,
     validate_commit,
+    validate_gh_merge,
     validate_push,
 )
 
@@ -503,3 +505,138 @@ class TestValidatePush:
         with patch("validate_git.get_current_branch", return_value="main"):
             is_valid, _error = validate_push(None, "/tmp")
             assert not is_valid
+
+
+class TestContainsGhPrMerge:
+    def test_basic_merge(self) -> None:
+        assert contains_gh_pr_merge("gh pr merge 123")
+
+    def test_merge_with_squash(self) -> None:
+        assert contains_gh_pr_merge("gh pr merge 123 --squash")
+
+    def test_merge_with_delete_branch(self) -> None:
+        assert contains_gh_pr_merge("gh pr merge --squash --delete-branch")
+
+    def test_merge_with_auto(self) -> None:
+        assert contains_gh_pr_merge("gh pr merge 123 --auto")
+
+    def test_bare_merge(self) -> None:
+        assert contains_gh_pr_merge("gh pr merge")
+
+    def test_pr_create_not_matched(self) -> None:
+        assert not contains_gh_pr_merge("gh pr create")
+
+    def test_pr_view_not_matched(self) -> None:
+        assert not contains_gh_pr_merge("gh pr view 123")
+
+    def test_pr_list_not_matched(self) -> None:
+        assert not contains_gh_pr_merge("gh pr list")
+
+    def test_chained_command(self) -> None:
+        assert contains_gh_pr_merge("gh pr create && gh pr merge")
+
+    def test_echo_before_merge(self) -> None:
+        assert contains_gh_pr_merge("echo done && gh pr merge 123")
+
+
+class TestValidateGhMerge:
+    def test_merge_blocked(self) -> None:
+        is_valid, error = validate_gh_merge("gh pr merge 123")
+        assert not is_valid
+        assert error is not None
+        assert "human approval" in error.lower()
+
+    def test_merge_with_flags_blocked(self) -> None:
+        is_valid, error = validate_gh_merge("gh pr merge 123 --squash")
+        assert not is_valid
+        assert error is not None
+
+    def test_pr_create_allowed(self) -> None:
+        is_valid, error = validate_gh_merge("gh pr create --fill")
+        assert is_valid
+        assert error is None
+
+    def test_pr_view_allowed(self) -> None:
+        is_valid, error = validate_gh_merge("gh pr view 123")
+        assert is_valid
+        assert error is None
+
+
+class TestMainGhMerge:
+    def test_blocks_gh_pr_merge_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "gh pr merge 123 --squash"},
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"
+            assert "PR merge blocked" in result["reason"]
+
+    def test_approves_gh_pr_create_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "gh pr create --fill"},
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "approve"
+
+    def test_approves_gh_pr_merge_moderate(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "gh pr merge 123 --squash"},
+            }
+        )
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch(
+                "validate_git.load_config", return_value=PluginConfig(level="moderate")
+            ),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "approve"
+
+    def test_blocks_chained_gh_pr_merge(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "gh pr create && gh pr merge"},
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"

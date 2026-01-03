@@ -177,6 +177,22 @@ def validate_push(refspec: str | None, cwd: str) -> tuple[bool, str | None]:
     return True, None
 
 
+def contains_gh_pr_merge(command: str) -> bool:
+    """Check if command contains gh pr merge."""
+    return bool(re.search(r"\bgh\s+pr\s+merge\b", command))
+
+
+def validate_gh_merge(command: str) -> tuple[bool, str | None]:
+    """Validate gh pr merge command.
+
+    Always returns invalid - PR merges require human approval.
+    Returns (is_valid, error_message).
+    """
+    if contains_gh_pr_merge(command):
+        return False, "PR merges require human approval. Review and merge manually."
+    return True, None
+
+
 def handle_validation_result(
     is_valid: bool,
     error_message: str | None,
@@ -213,8 +229,8 @@ def main() -> None:
 
     command = tool_input.get("command", "")
 
-    # Skip non-git commands
-    if "git" not in command:
+    # Skip commands that don't involve git or gh
+    if "git" not in command and "gh" not in command:
         output_approve()
         return
 
@@ -242,6 +258,14 @@ def main() -> None:
         cwd = context.get("cwd", ".")
         is_valid, error_message = validate_push(refspec, cwd)
         if handle_validation_result(is_valid, error_message, "Push blocked", config):
+            return
+
+    # Check gh pr merge (requires human approval)
+    if "gh" in command and "merge" in command:
+        is_valid, error_message = validate_gh_merge(command)
+        if handle_validation_result(
+            is_valid, error_message, "PR merge blocked", config
+        ):
             return
 
     output_approve()
