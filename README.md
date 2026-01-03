@@ -282,24 +282,16 @@ uv run pytest -m e2e
 uv run pytest
 ```
 
-### Dogfooding
+### Use the Plugin During Development
 
-This plugin can be used during its own development for real-world testing.
+This plugin should be used during its own development. Choose the approach based on your workflow:
 
-**Option 1: Install from marketplace** (use stable version)
-```bash
-claude plugin install python-dev-framework@WorldCentralKitchen
-cd python-dev-framework
-claude  # Plugin applies to its own development
-```
+| Method | Command | Use When |
+|--------|---------|----------|
+| **Install from marketplace** | `claude plugin install python-dev-framework@WorldCentralKitchen` | Day-to-day development with stable version |
+| **Load from source** | `claude --plugin-dir .` | Testing unreleased changes before release |
 
-**Option 2: Load from source** (test unreleased changes)
-```bash
-cd python-dev-framework
-claude --plugin-dir .  # Loads plugin from current directory
-```
-
-This enables:
+Both methods enable:
 - **LSP diagnostics**: Real-time linting feedback from Ruff
 - **PostToolUse hook**: Auto-formats Python files on Write/Edit
 - **PreToolUse hook**: Validates git branch names and commit messages
@@ -312,7 +304,7 @@ This enables:
 | Can't commit          | `git commit --no-verify`              |
 | Need to debug         | Run hook script manually              |
 
-See [ADR-007](docs/adr/007-plugin-dogfooding.md) for details.
+See [ADR-007](docs/adr/007-plugin-dogfooding.md) for rationale.
 
 ### Release & Distribution
 
