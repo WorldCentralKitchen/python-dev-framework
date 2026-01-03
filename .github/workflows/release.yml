@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g., v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Verify tag matches plugin version
+        run: |
+          PLUGIN_VERSION=$(jq -r .version .claude-plugin/plugin.json)
+          EXPECTED_TAG="v${PLUGIN_VERSION}"
+          if [ "${{ steps.version.outputs.tag }}" != "$EXPECTED_TAG" ]; then
+            echo "::error::Tag ${{ steps.version.outputs.tag }} does not match plugin.json version $PLUGIN_VERSION"
+            exit 1
+          fi
+
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          NOTES=$(awk "/^## \[${VERSION}\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          body: ${{ steps.changelog.outputs.notes }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.tag, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-marketplace:
+    name: Update Marketplace Version
+    runs-on: ubuntu-latest
+    needs: release
+    # Only update marketplace for stable releases (not prereleases)
+    if: ${{ !contains(github.ref_name || github.event.inputs.tag, '-') }}
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME:-${{ github.event.inputs.tag }}}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Checkout marketplace repo
+        uses: actions/checkout@v4
+        with:
+          repository: WorldCentralKitchen/wck-claude-plugins
+          token: ${{ secrets.MARKETPLACE_PAT }}
+          path: marketplace
+
+      - name: Update marketplace.json
+        run: |
+          cd marketplace
+          jq '(.plugins[] | select(.name == "python-dev-framework")).version = "${{ steps.version.outputs.version }}"' \
+            .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+
+      - name: Create PR on marketplace
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.MARKETPLACE_PAT }}
+          path: marketplace
+          branch: update-python-dev-framework-${{ steps.version.outputs.tag }}
+          title: "chore: update python-dev-framework to ${{ steps.version.outputs.tag }}"
+          body: |
+            Automated PR to update python-dev-framework version.
+
+            **Release:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}
+            **Changelog:** ${{ github.server_url }}/${{ github.repository }}/blob/main/CHANGELOG.md
+          commit-message: "chore: update python-dev-framework to ${{ steps.version.outputs.tag }}"
