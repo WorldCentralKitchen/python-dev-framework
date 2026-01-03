@@ -22,12 +22,14 @@ from validate_git import (
     build_commit_pattern,
     extract_branch_name,
     extract_commit_message,
+    extract_push_target,
     main,
     output_approve,
     output_block,
     read_stdin_context,
     validate_branch,
     validate_commit,
+    validate_push,
 )
 
 
@@ -335,3 +337,180 @@ class TestMain:
             captured = capsys.readouterr()
             result = json.loads(captured.out.strip())
             assert result["decision"] == "block"
+
+    def test_blocks_push_to_main_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin main"},
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"
+            assert "Push blocked" in result["reason"]
+
+    def test_blocks_push_to_master_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin master"},
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"
+
+    def test_approves_push_to_feature_branch(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin feature/add-auth"},
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "approve"
+
+    def test_blocks_chained_push_to_main(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {
+                    "command": (
+                        'git add . && git commit -m "feat: x" && git push origin main'
+                    )
+                },
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"
+
+    def test_approves_push_to_main_moderate(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin main"},
+                "cwd": "/tmp",
+            }
+        )
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch(
+                "validate_git.load_config", return_value=PluginConfig(level="moderate")
+            ),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "approve"
+
+
+class TestExtractPushTarget:
+    def test_push_with_remote_and_branch(self) -> None:
+
+        remote, refspec = extract_push_target("git push origin main")
+        assert remote == "origin"
+        assert refspec == "main"
+
+    def test_push_with_flags(self) -> None:
+
+        remote, refspec = extract_push_target("git push -u origin feature/foo")
+        assert remote == "origin"
+        assert refspec == "feature/foo"
+
+    def test_push_force(self) -> None:
+
+        remote, refspec = extract_push_target("git push --force origin main")
+        assert remote == "origin"
+        assert refspec == "main"
+
+    def test_bare_push(self) -> None:
+
+        remote, refspec = extract_push_target("git push")
+        assert remote is None
+        assert refspec is None
+
+    def test_push_in_chained_command(self) -> None:
+
+        remote, refspec = extract_push_target("git add . && git push origin main")
+        assert remote == "origin"
+        assert refspec == "main"
+
+
+class TestValidatePush:
+    def test_push_to_main_blocked(self) -> None:
+
+        is_valid, error = validate_push("main", "/tmp")
+        assert not is_valid
+        assert error is not None
+        assert "protected branch" in error.lower()
+
+    def test_push_to_master_blocked(self) -> None:
+
+        is_valid, error = validate_push("master", "/tmp")
+        assert not is_valid
+        assert error is not None
+
+    def test_push_to_feature_allowed(self) -> None:
+
+        is_valid, error = validate_push("feature/add-auth", "/tmp")
+        assert is_valid
+        assert error is None
+
+    def test_push_to_tag_allowed(self) -> None:
+
+        is_valid, error = validate_push("v1.0.0", "/tmp")
+        assert is_valid
+        assert error is None
+
+    def test_bare_push_on_feature_branch(self) -> None:
+
+        with patch("validate_git.get_current_branch", return_value="feature/foo"):
+            is_valid, _error = validate_push(None, "/tmp")
+            assert is_valid
+
+    def test_bare_push_on_main_blocked(self) -> None:
+
+        with patch("validate_git.get_current_branch", return_value="main"):
+            is_valid, _error = validate_push(None, "/tmp")
+            assert not is_valid
