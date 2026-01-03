@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,9 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).parent))
 
 from config import PluginConfig, load_config
+
+
+PROTECTED_BRANCHES = frozenset({"main", "master"})
 
 
 def build_branch_pattern(branch_types: list[str]) -> re.Pattern[str]:
@@ -120,6 +124,81 @@ def validate_commit(message: str, config: PluginConfig) -> tuple[bool, str | Non
     return False, guidance
 
 
+def get_current_branch(cwd: str) -> str | None:
+    """Get current git branch name."""
+
+    result = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=cwd,
+    )
+    if result.returncode == 0:
+        return result.stdout.strip()
+    return None
+
+
+def extract_push_target(command: str) -> tuple[str | None, str | None]:
+    """Extract remote and refspec from git push command.
+
+    Returns (remote, refspec) tuple. Either may be None.
+    """
+    match = re.search(
+        r"git\s+push"
+        r"(?:\s+[-][-]?\S+)*"  # optional flags
+        r"(?:\s+(\S+))?"  # optional remote
+        r"(?:\s+(\S+))?",  # optional refspec
+        command,
+    )
+    if not match:
+        return None, None
+    return match.group(1), match.group(2)
+
+
+def validate_push(refspec: str | None, cwd: str) -> tuple[bool, str | None]:
+    """Validate push target.
+
+    Returns (is_valid, error_message).
+    """
+    # Determine target branch
+    target: str | None = refspec
+    if target is None:
+        # Bare push - check current branch
+        target = get_current_branch(cwd)
+
+    if target is None:
+        return True, None  # Can't determine, allow
+
+    # Check if pushing to protected branch
+    if target in PROTECTED_BRANCHES:
+        return False, "Direct push to protected branch. Create a PR instead."
+
+    return True, None
+
+
+def handle_validation_result(
+    is_valid: bool,
+    error_message: str | None,
+    block_reason: str,
+    config: PluginConfig,
+) -> bool:
+    """Handle validation result based on strictness level.
+
+    Returns True if execution should stop (blocked in strict mode).
+    """
+    if is_valid:
+        return False
+
+    if config.level == "strict":
+        output_block(block_reason, error_message or "")
+        return True
+    elif config.level == "moderate":
+        print(f"Warning: {error_message}", file=sys.stderr)
+
+    return False
+
+
 def main() -> None:
     """Hook entry point."""
     context = read_stdin_context()
@@ -144,28 +223,26 @@ def main() -> None:
     # Check branch creation
     if branch := extract_branch_name(command):
         is_valid, error_message = validate_branch(branch, config)
-        if not is_valid:
-            if config.level == "strict":
-                output_block(f"Invalid branch: {branch}", error_message or "")
-                return
-            elif config.level == "moderate":
-                print(
-                    f"Warning: Invalid branch '{branch}'. {error_message}",
-                    file=sys.stderr,
-                )
+        if handle_validation_result(
+            is_valid, error_message, f"Invalid branch: {branch}", config
+        ):
+            return
 
     # Check commit message
     if message := extract_commit_message(command):
         is_valid, error_message = validate_commit(message, config)
-        if not is_valid:
-            if config.level == "strict":
-                output_block(f"Invalid commit message: {message}", error_message or "")
-                return
-            elif config.level == "moderate":
-                print(
-                    f"Warning: Invalid commit message. {error_message}",
-                    file=sys.stderr,
-                )
+        if handle_validation_result(
+            is_valid, error_message, f"Invalid commit message: {message}", config
+        ):
+            return
+
+    # Check push to protected branch
+    if "git push" in command:
+        _remote, refspec = extract_push_target(command)
+        cwd = context.get("cwd", ".")
+        is_valid, error_message = validate_push(refspec, cwd)
+        if handle_validation_result(is_valid, error_message, "Push blocked", config):
+            return
 
     output_approve()
 
