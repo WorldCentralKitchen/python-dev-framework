@@ -90,12 +90,16 @@ jobs:
           rm -rf plugins/python-dev-framework
           mkdir -p plugins/python-dev-framework
 
-          # Copy plugin essentials
+          # Copy plugin essentials (hooks/skills at root level, not inside .claude-plugin)
           cp -r $GITHUB_WORKSPACE/plugin/.claude-plugin plugins/python-dev-framework/
           cp -r $GITHUB_WORKSPACE/plugin/hooks plugins/python-dev-framework/
           cp -r $GITHUB_WORKSPACE/plugin/skills plugins/python-dev-framework/
           cp $GITHUB_WORKSPACE/plugin/CLAUDE.md plugins/python-dev-framework/
           cp $GITHUB_WORKSPACE/plugin/.lsp.json plugins/python-dev-framework/ 2>/dev/null || true
+
+          # Remove symlinks (they don't work in marketplace context)
+          rm -f plugins/python-dev-framework/.claude-plugin/hooks
+          rm -f plugins/python-dev-framework/.claude-plugin/skills
 
           # Generate stub README
           cat > plugins/python-dev-framework/README.md << 'EOF'
