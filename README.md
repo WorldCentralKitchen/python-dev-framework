@@ -16,48 +16,44 @@ This plugin guides Claude toward production-quality code by enforcing type safet
 
 ## Installation
 
+This plugin is distributed via the [WCK Claude Plugins Marketplace](https://github.com/WorldCentralKitchen/wck-claude-plugins).
+
 ### Prerequisites
 
 - [Claude Code CLI](https://claude.ai/code) installed
-- [GitHub CLI](https://cli.github.com/) installed
-- Access to WorldCentralKitchen/wck-claude-plugins (private repo)
-
-### Setup GitHub CLI
-
-```bash
-# Install (macOS)
-brew install gh
-
-# Authenticate
-gh auth login
-```
+- [GitHub CLI](https://cli.github.com/) installed and authenticated (`gh auth login`)
+- Access to WorldCentralKitchen GitHub org (private repos)
 
 ### Install Plugin
 
-Run from your terminal (not inside Claude Code):
-
 ```bash
-# Add marketplace (one-time)
+# Add WCK marketplace (one-time)
 claude plugin marketplace add "https://oauth:$(gh auth token)@github.com/WorldCentralKitchen/wck-claude-plugins.git"
 
 # Install plugin
 claude plugin install python-dev-framework@WorldCentralKitchen
-```
 
-To install a specific version:
-
-```bash
-claude plugin marketplace add "https://oauth:$(gh auth token)@github.com/WorldCentralKitchen/wck-claude-plugins.git#v0.1.0"
-claude plugin install python-dev-framework@WorldCentralKitchen
-```
-
-### Verify Installation
-
-```bash
+# Verify
 claude plugin list
 ```
 
-> **Note:** Claude Code doesn't support private repo auth natively ([#9756](https://github.com/anthropics/claude-code/issues/9756)). The token-in-URL workaround above uses `gh auth token` to inject your GitHub credentials.
+### Update to Latest Version
+
+```bash
+# Refresh marketplace catalog
+claude plugin marketplace update WorldCentralKitchen
+
+# Reinstall plugin to get latest
+claude plugin install python-dev-framework@WorldCentralKitchen
+```
+
+### Pin to Specific Version
+
+```bash
+claude plugin marketplace add "https://oauth:$(gh auth token)@github.com/WorldCentralKitchen/wck-claude-plugins.git#v0.1.0"
+```
+
+> **Note:** Claude Code doesn't support private repo auth natively. The `gh auth token` workaround injects your GitHub credentials into the URL.
 
 ## Configuration
 
@@ -178,7 +174,7 @@ log.info("event_name", user_id=123)
 
 Exempt locations (via per-file-ignores):
 - `tests/**/*.py` — print allowed in tests
-- `python-dev-framework/hooks/scripts/*.py` — hooks use print for stdout protocol
+- `hooks/scripts/*.py` — hooks use print for stdout protocol
 
 See [TDD-002](docs/tdd/002-gcp-logging-integration.md) for structlog configuration patterns.
 
@@ -296,10 +292,19 @@ uv run pytest
 
 ### Dogfooding
 
-This plugin can be loaded into its own development environment for real-world testing.
+This plugin can be used during its own development for real-world testing.
 
+**Option 1: Install from marketplace** (use stable version)
 ```bash
-claude --plugin-dir python-dev-framework
+claude plugin install python-dev-framework@WorldCentralKitchen
+cd python-dev-framework
+claude  # Plugin applies to its own development
+```
+
+**Option 2: Load from source** (test unreleased changes)
+```bash
+cd python-dev-framework
+claude --plugin-dir .  # Loads plugin from current directory
 ```
 
 This enables:
@@ -315,24 +320,25 @@ This enables:
 | Can't commit          | `git commit --no-verify`              |
 | Need to debug         | Run hook script manually              |
 
+See [ADR-007](docs/adr/007-plugin-dogfooding.md) for details.
+
 ### Repository Structure
 ```
-wck-claude-plugins/                  # Marketplace repository
+python-dev-framework/
 ├── .claude-plugin/
-│   └── marketplace.json             # Marketplace catalog
-└── python-dev-framework/            # Plugin directory
-    ├── .claude-plugin/
-    │   └── plugin.json              # Plugin manifest
-    ├── .lsp.json                    # LSP server configuration
-    ├── hooks/
-    │   ├── hooks.json               # Hook definitions
-    │   └── scripts/
-    │       ├── config.py            # Shared configuration loader
-    │       ├── format_python.py     # PostToolUse: formats .py files
-    │       └── validate_git.py      # PreToolUse: validates git commands
-    └── skills/
-        └── python-standards/        # Python standards skill
-            └── SKILL.md
+│   └── plugin.json              # Plugin manifest
+├── .lsp.json                    # LSP server configuration
+├── hooks/
+│   ├── hooks.json               # Hook definitions
+│   └── scripts/
+│       ├── config.py            # Shared configuration loader
+│       ├── format_python.py     # PostToolUse: formats .py files
+│       └── validate_git.py      # PreToolUse: validates git commands
+├── skills/
+│   ├── python-standards/        # Python standards skill
+│   └── plugin-versioning/       # Plugin versioning guidance
+├── tests/                       # Unit and E2E tests
+└── docs/                        # ADRs and TDDs
 ```
 
 ## Documentation
