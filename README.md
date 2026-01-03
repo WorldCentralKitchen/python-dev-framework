@@ -94,6 +94,7 @@ Projects using this plugin need:
 2. `.pre-commit-config.yaml` for git hooks
 3. Dev dependencies: pytest, mypy, ruff, black, pre-commit
 4. `from __future__ import annotations` at the top of all Python files (strict mode)
+5. IDE setup for real-time feedback (see [IDE Setup](#ide-setup-vscode) below)
 
 ### Required: `__future__` Annotations
 
@@ -253,6 +254,16 @@ See [TDD-006](docs/tdd/006-immutability-patterns.md) for implementation details 
 
 See [TDD-001](docs/tdd/001-plugin-implementation.md) for complete templates.
 
+### IDE Setup (VSCode)
+
+Configure VSCode for real-time linting and formatting:
+
+```bash
+uv run --with "python-dev-framework @ git+https://github.com/WorldCentralKitchen/python-dev-framework" setup-ide
+```
+
+This creates `.vscode/settings.json` and `.vscode/extensions.json` with Ruff and Mypy integration. Install the recommended extensions when prompted.
+
 ## Using Without Claude Code
 
 This framework works without Claude Code. The enforcement layers:
@@ -296,15 +307,9 @@ Pre-commit provides the same enforcement as Claude Code hooks, but at commit tim
 uv sync
 ```
 
-### IDE Setup (VSCode)
+### IDE Setup
 
-Configure VSCode for real-time linting and formatting:
-
-```bash
-make setup-ide
-```
-
-This creates `.vscode/settings.json` and `.vscode/extensions.json` with Ruff and Mypy integration. Install the recommended extensions when prompted.
+For real-time linting in VSCode, run `make setup-ide` or see [IDE Setup](#ide-setup-vscode) above.
 
 ### Run Tests
 
