@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-01-03
+
+### Added
+
+- Skills discovery via `skills` field in plugin.json
+- Unit tests for refspec destination parsing
+
+### Fixed
+
+- Hook path resolution for inline `.claude-plugin` plugins
+- Refspec parsing for `HEAD:main` and `+HEAD:main` push commands
+
 ## [0.5.0] - 2026-01-02
 
 ### Added
@@ -77,7 +89,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TDD-001 through TDD-006 documenting implementation details
 - README with installation and configuration instructions
 
-[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.2.0...v0.3.0
