@@ -31,8 +31,8 @@ This plugin is distributed via the [WCK Claude Plugins Marketplace](https://gith
 # Add WCK marketplace (one-time)
 claude plugin marketplace add "https://oauth:$(gh auth token)@github.com/WorldCentralKitchen/wck-claude-plugins.git"
 
-# Install plugin
-claude plugin install python-dev-framework@WorldCentralKitchen
+# Install plugin (project scope recommended)
+claude plugin install python-dev-framework@WorldCentralKitchen --scope project
 
 # Verify
 claude plugin list
@@ -45,7 +45,7 @@ claude plugin list
 claude plugin marketplace update WorldCentralKitchen
 
 # Reinstall plugin to get latest
-claude plugin install python-dev-framework@WorldCentralKitchen
+claude plugin install python-dev-framework@WorldCentralKitchen --scope project
 ```
 
 ## Configuration
@@ -354,7 +354,7 @@ This plugin should be used during its own development. Choose the approach based
 
 | Method | Command | Use When |
 |--------|---------|----------|
-| **Install from marketplace** | `claude plugin install python-dev-framework@WorldCentralKitchen` | Day-to-day development with stable version |
+| **Install from marketplace** | `claude plugin install python-dev-framework@WorldCentralKitchen --scope project` | Day-to-day development with stable version |
 | **Load from source** | `claude --plugin-dir .` | Testing unreleased changes before release |
 
 Both methods enable:
