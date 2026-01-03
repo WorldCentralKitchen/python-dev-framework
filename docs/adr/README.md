@@ -17,6 +17,7 @@
 | [ADR-011](011-type-import-standards.md) | Type Import Standards | Proposed | typing vs collections.abc, PEP 585/604 |
 | [ADR-012](012-source-directory-layout.md) | Source Directory Layout | Proposed | types/, models/, _internal/ conventions |
 | [ADR-013](013-immutability-safety-patterns.md) | Immutability Patterns | Proposed | Tuple preference, SequenceNotStr, frozen dataclasses |
+| [ADR-014](014-design-patterns-skill.md) | Design Patterns Skill | Proposed | Pythonic GoF patterns, SOLID principles, anti-patterns |
 
 ## Relationships
 
@@ -61,9 +62,10 @@
 | ADR-008 | ADR-001, ADR-004 | ADR-011, ADR-013 |
 | ADR-009 | ADR-008 | — |
 | ADR-010 | ADR-001 | ADR-011 |
-| ADR-011 | ADR-008, ADR-010 | — |
+| ADR-011 | ADR-008, ADR-010 | ADR-014 |
 | ADR-012 | ADR-001, ADR-004 | — |
-| ADR-013 | ADR-004, ADR-008 | — |
+| ADR-013 | ADR-004, ADR-008 | ADR-014 |
+| ADR-014 | ADR-004, ADR-011, ADR-013 | — |
 
 ## Coverage Matrix
 
@@ -91,6 +93,7 @@ Maps plan decisions to ADRs:
 | Immutability patterns | ADR-013 |
 | Extended linting rules | ADR-008 |
 | LSP integration | ADR-009 |
+| Design patterns skill | ADR-014 |
 
 ## Related Documents
 

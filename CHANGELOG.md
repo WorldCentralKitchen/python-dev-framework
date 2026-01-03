@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-01-02
+
+### Added
+
+- Marketplace sync: release workflow now syncs plugin files to marketplace repo
+- Self-registering plugins: adds entry to marketplace.json if not exists
+
+### Changed
+
+- Updated plugin-versioning skill with marketplace distribution docs
+- Simplified installation docs (removed unsupported version pinning)
+
 ## [0.1.0] - 2024-12-30
 
 ### Added
@@ -31,5 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TDD-001 through TDD-006 documenting implementation details
 - README with installation and configuration instructions
 
-[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/WorldCentralKitchen/python-dev-framework/releases/tag/v0.1.0
