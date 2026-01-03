@@ -14,6 +14,21 @@ triggers:
 
 # Plugin Versioning Guide
 
+## Agent Instructions
+
+After completing your release steps (CHANGELOG, plugin.json, PR), **always inform the user of their required next steps**:
+
+1. Merge the release PR
+2. Create and push the version tag:
+   ```bash
+   git checkout main && git pull
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+3. Review/merge the marketplace PR (created automatically by the release workflow)
+
+**Do not assume the user knows the tag triggers the release workflow.**
+
 ## Semantic Versioning for Plugins
 
 | Change Type | Version Bump | Example |
