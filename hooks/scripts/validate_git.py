@@ -29,7 +29,7 @@ PROTECTED_BRANCHES = frozenset({"main", "master"})
 def build_branch_pattern(branch_types: list[str]) -> re.Pattern[str]:
     """Build regex pattern for valid branch names."""
     types_pattern = "|".join(re.escape(t) for t in branch_types)
-    return re.compile(rf"^({types_pattern})/[a-z0-9-]+$")
+    return re.compile(rf"^({types_pattern})/[a-z0-9.-]+$")
 
 
 def build_commit_pattern(commit_types: list[str]) -> re.Pattern[str]:
