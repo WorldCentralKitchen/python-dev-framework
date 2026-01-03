@@ -35,16 +35,21 @@ triggers:
    }
    ```
 
-3. **Commit release**
+3. **Create release branch and PR**
    ```bash
+   git checkout -b chore/release-v1.1.0
    git add CHANGELOG.md .claude-plugin/plugin.json
    git commit -m "chore: release v1.1.0"
+   git push -u origin chore/release-v1.1.0
+   gh pr create --title "chore: release v1.1.0" --body "Release v1.1.0"
    ```
 
-4. **Create and push tag**
+4. **Human merges PR, then tag**
    ```bash
+   # After PR is merged by human:
+   git checkout main && git pull
    git tag v1.1.0
-   git push origin main v1.1.0
+   git push origin v1.1.0
    ```
 
 5. **Automated steps** (GitHub Action handles these)
