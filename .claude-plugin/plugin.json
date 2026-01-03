@@ -1,6 +1,6 @@
 {
   "name": "python-dev-framework",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Opinionated Python development enforcement for Claude Code",
   "author": {
     "name": "World Central Kitchen"
@@ -8,6 +8,7 @@
   "repository": "https://github.com/WorldCentralKitchen/python-dev-framework",
   "license": "MIT",
   "keywords": ["python", "linting", "formatting", "git-workflow", "type-checking"],
-  "hooks": "../hooks/hooks.json",
+  "hooks": "./hooks/hooks.json",
+  "skills": "./skills",
   "lspServers": "./.lsp.json"
 }

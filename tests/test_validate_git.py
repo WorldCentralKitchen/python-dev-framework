@@ -27,6 +27,7 @@ from validate_git import (
     main,
     output_approve,
     output_block,
+    parse_refspec_destination,
     read_stdin_context,
     validate_branch,
     validate_commit,
@@ -446,6 +447,67 @@ class TestMain:
             result = json.loads(captured.out.strip())
             assert result["decision"] == "approve"
 
+    def test_blocks_push_head_to_main_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin HEAD:main"},
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"
+            assert "Push blocked" in result["reason"]
+
+    def test_blocks_force_push_to_main_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin +HEAD:main"},
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "block"
+
+    def test_approves_push_head_to_feature_strict(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        input_data = json.dumps(
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "git push origin HEAD:feature/new"},
+                "cwd": "/tmp",
+            }
+        )
+        strict_config = PluginConfig(level="strict")
+        with (
+            patch("sys.stdin", StringIO(input_data)),
+            patch("validate_git.load_config", return_value=strict_config),
+        ):
+            main()
+            captured = capsys.readouterr()
+            result = json.loads(captured.out.strip())
+            assert result["decision"] == "approve"
+
 
 class TestExtractPushTarget:
     def test_push_with_remote_and_branch(self) -> None:
@@ -472,6 +534,42 @@ class TestExtractPushTarget:
         remote, refspec = extract_push_target("git add . && git push origin main")
         assert remote == "origin"
         assert refspec == "main"
+
+    def test_push_with_refspec_colon(self) -> None:
+        remote, refspec = extract_push_target("git push origin HEAD:main")
+        assert remote == "origin"
+        assert refspec == "HEAD:main"
+
+    def test_push_with_force_refspec(self) -> None:
+        remote, refspec = extract_push_target("git push origin +HEAD:main")
+        assert remote == "origin"
+        assert refspec == "+HEAD:main"
+
+
+class TestParseRefspecDestination:
+    def test_simple_branch(self) -> None:
+
+        assert parse_refspec_destination("main") == "main"
+
+    def test_head_to_main(self) -> None:
+
+        assert parse_refspec_destination("HEAD:main") == "main"
+
+    def test_branch_to_branch(self) -> None:
+
+        assert parse_refspec_destination("feature/foo:main") == "main"
+
+    def test_force_push_refspec(self) -> None:
+
+        assert parse_refspec_destination("+HEAD:main") == "main"
+
+    def test_force_push_branch_to_branch(self) -> None:
+
+        assert parse_refspec_destination("+feature/foo:develop") == "develop"
+
+    def test_feature_branch_refspec(self) -> None:
+
+        assert parse_refspec_destination("HEAD:feature/bar") == "feature/bar"
 
 
 class TestValidatePush:
