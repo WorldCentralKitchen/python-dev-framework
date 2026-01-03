@@ -42,9 +42,9 @@ class TestValidateGitBranchE2E:
         )
 
         # PreToolUse hook should block this
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Invalid branch allowed: stdout={result.stdout}, stderr={result.stderr}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Invalid branch allowed: stdout={result.stdout}, stderr={result.stderr}"
+        )
 
     def test_invalid_branch_allowed_moderate(
         self,
@@ -160,9 +160,9 @@ class TestValidateGitCommitE2E:
             git_command='git commit -m "fixed stuff"',
         )
 
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Invalid commit was allowed: {result.stdout}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Invalid commit was allowed: {result.stdout}"
+        )
 
     def test_invalid_commit_allowed_moderate(
         self,
@@ -233,9 +233,9 @@ class TestValidateGitPushE2E:
         )
 
         # PreToolUse hook should block this
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Push to main was allowed: stdout={result.stdout}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Push to main was allowed: stdout={result.stdout}"
+        )
 
     def test_push_to_master_blocked_strict(
         self,
@@ -247,9 +247,9 @@ class TestValidateGitPushE2E:
             git_command="git push origin master",
         )
 
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Push to master was allowed: stdout={result.stdout}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Push to master was allowed: stdout={result.stdout}"
+        )
 
     def test_push_with_flags_to_main_blocked(
         self,
@@ -261,9 +261,9 @@ class TestValidateGitPushE2E:
             git_command="git push -u origin main",
         )
 
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Push with flags to main was allowed: stdout={result.stdout}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Push with flags to main was allowed: stdout={result.stdout}"
+        )
 
     def test_push_to_feature_branch_allowed(
         self,
@@ -279,9 +279,9 @@ class TestValidateGitPushE2E:
         )
 
         # Should not be blocked (may fail for other reasons like no remote)
-        assert (
-            not result.was_blocked
-        ), f"Push to feature branch was blocked: {result.stderr}"
+        assert not result.was_blocked, (
+            f"Push to feature branch was blocked: {result.stderr}"
+        )
 
     def test_push_to_main_allowed_moderate(
         self,
@@ -294,6 +294,6 @@ class TestValidateGitPushE2E:
         )
 
         # Should not be blocked in moderate mode (warns only)
-        assert (
-            not result.was_blocked
-        ), f"Push to main was blocked in moderate mode: {result.stderr}"
+        assert not result.was_blocked, (
+            f"Push to main was blocked in moderate mode: {result.stderr}"
+        )
