@@ -1,14 +1,18 @@
-# TDD-007: Push Validation Patterns
+# TDD-007: Protected Branch Enforcement Patterns
 
 | Field | Value |
 |-------|-------|
-| Version | 0.5.0 |
+| Version | 0.6.0 |
 | Date | 2026-01-02 |
 | Related ADRs | [ADR-002](../adr/002-two-layer-enforcement-model.md), [ADR-015](../adr/015-protected-branch-push-validation.md) |
 
 ## Overview
 
-Implementation patterns for validating `git push` commands in the PreToolUse hook.
+Implementation patterns for validating `git push` and `gh pr merge` commands in the PreToolUse hook.
+
+---
+
+## Part 1: Push Validation (v0.5.0)
 
 ## Command Parsing
 
@@ -140,4 +144,87 @@ def test_push_to_main_blocked(e2e_project, strict_settings):
         "Run: git push origin main",
     )
     assert "blocked" in result.lower() or "create a pr" in result.lower()
+```
+
+---
+
+## Part 2: PR Merge Validation (v0.6.0)
+
+### Command Detection
+
+Detect `gh pr merge` commands anywhere in the Bash command string:
+
+```python
+def contains_gh_pr_merge(command: str) -> bool:
+    """Check if command contains gh pr merge."""
+    return bool(re.search(r"\bgh\s+pr\s+merge\b", command))
+```
+
+### Validation Function
+
+```python
+def validate_gh_merge(command: str) -> tuple[bool, str | None]:
+    """Validate gh pr merge command.
+
+    Always returns invalid - PR merges require human approval.
+    Returns (is_valid, error_message).
+    """
+    if contains_gh_pr_merge(command):
+        return False, "PR merges require human approval. Review and merge manually."
+    return True, None
+```
+
+### Integration in main()
+
+```python
+# After push validation, before output_approve():
+if "gh" in command and "merge" in command:
+    is_valid, error_message = validate_gh_merge(command)
+    if handle_validation_result(
+        is_valid, error_message, "PR merge blocked", config
+    ):
+        return
+```
+
+### Test Cases
+
+#### Unit Tests
+
+| Input | Expected |
+|-------|----------|
+| `gh pr merge 123` | Block |
+| `gh pr merge 123 --squash` | Block |
+| `gh pr merge --squash --delete-branch` | Block |
+| `gh pr merge 123 --auto` | Block |
+| `gh pr merge` | Block |
+| `gh pr create` | Allow |
+| `gh pr view 123` | Allow |
+| `gh pr list` | Allow |
+
+#### Chained Commands
+
+| Input | Expected |
+|-------|----------|
+| `gh pr create && gh pr merge` | Block |
+| `echo "done" && gh pr merge 123` | Block |
+| `gh pr create --fill` | Allow |
+
+#### E2E Test
+
+```python
+def test_gh_pr_merge_blocked_strict(strict_settings):
+    """gh pr merge should be blocked in strict mode."""
+    result = run_git_via_claude(
+        project_dir=strict_settings,
+        git_command="gh pr merge 123 --squash",
+    )
+    assert result.was_blocked or not result.succeeded
+
+def test_gh_pr_merge_allowed_moderate(moderate_settings):
+    """gh pr merge should warn but allow in moderate mode."""
+    result = run_git_via_claude(
+        project_dir=moderate_settings,
+        git_command="gh pr merge 123 --squash",
+    )
+    assert not result.was_blocked
 ```
