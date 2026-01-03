@@ -56,9 +56,9 @@ class TestT201RuffConfiguration:
         self,
         ruff_config: dict[str, Any],
     ) -> None:
-        """Verify python-dev-framework/hooks/scripts/*.py has T201 in per-file-ignores."""
+        """Verify hooks/scripts/*.py has T201 in per-file-ignores."""
         per_file_ignores = ruff_config["per-file-ignores"]
-        hook_ignores = per_file_ignores.get("python-dev-framework/hooks/scripts/*.py", "")
+        hook_ignores = per_file_ignores.get("hooks/scripts/*.py", "")
 
         # T201 should be in the ignore list for hooks
         # (they use print for stdout protocol)
