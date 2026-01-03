@@ -36,11 +36,14 @@ dev = [
     "useful-types>=0.2.1",
 ]
 
+[project.scripts]
+setup-ide = "scripts.setup_ide:main"
+
 [project.urls]
 Repository = "https://github.com/WorldCentralKitchen/python-dev-framework"
 
 [tool.hatch.build.targets.wheel]
-packages = ["hooks/scripts"]
+packages = ["hooks/scripts", "scripts"]
 
 # ──────────────────────────────────────────────────────────────
 # RUFF: Linting
@@ -89,6 +92,7 @@ strict = true  # TDD-004: Aggressively move imports to TYPE_CHECKING
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ARG001", "PLR2004", "TCH002", "TCH003", "SLF001", "T201"]
 "hooks/scripts/*.py" = ["T201", "TCH001"]  # Hooks use print for stdout protocol; runtime imports needed
+"scripts/*.py" = ["T201"]  # CLI scripts use print for user output
 "src/*/_internal/*.py" = ["SLF001"]  # TDD-005: Allow internal-to-internal access
 
 # ──────────────────────────────────────────────────────────────

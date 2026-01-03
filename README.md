@@ -253,6 +253,33 @@ See [TDD-006](docs/tdd/006-immutability-patterns.md) for implementation details 
 
 See [TDD-001](docs/tdd/001-plugin-implementation.md) for complete templates.
 
+## Using Without Claude Code
+
+This framework works without Claude Code. The enforcement layers:
+
+| Layer | Claude Code | Standalone |
+|-------|-------------|------------|
+| Real-time linting | Plugin hooks | VSCode + Ruff extension |
+| Type checking | Plugin hooks | VSCode + Mypy extension |
+| Git-level gate | Pre-commit hooks | Pre-commit hooks |
+
+### Standalone Setup
+
+1. **Copy configurations** from the [pyproject.toml template](docs/tdd/001-plugin-implementation.md)
+
+2. **Install pre-commit hooks**:
+   ```bash
+   uv add --dev pre-commit ruff black mypy pytest
+   pre-commit install
+   ```
+
+3. **Set up VSCode** for real-time feedback:
+   ```bash
+   uv run --with "python-dev-framework @ git+https://github.com/WorldCentralKitchen/python-dev-framework" setup-ide
+   ```
+
+Pre-commit provides the same enforcement as Claude Code hooks, but at commit time rather than during editing. The VSCode extensions provide real-time feedback equivalent to Claude Code's PostToolUse hooks.
+
 ---
 
 ## Development
@@ -268,6 +295,16 @@ See [TDD-001](docs/tdd/001-plugin-implementation.md) for complete templates.
 ```bash
 uv sync
 ```
+
+### IDE Setup (VSCode)
+
+Configure VSCode for real-time linting and formatting:
+
+```bash
+make setup-ide
+```
+
+This creates `.vscode/settings.json` and `.vscode/extensions.json` with Ruff and Mypy integration. Install the recommended extensions when prompted.
 
 ### Run Tests
 
