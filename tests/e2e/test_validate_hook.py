@@ -42,9 +42,9 @@ class TestValidateGitBranchE2E:
         )
 
         # PreToolUse hook should block this
-        assert result.was_blocked or not result.succeeded, (
-            f"Invalid branch allowed: stdout={result.stdout}, stderr={result.stderr}"
-        )
+        assert (
+            result.was_blocked or not result.succeeded
+        ), f"Invalid branch allowed: stdout={result.stdout}, stderr={result.stderr}"
 
     def test_invalid_branch_allowed_moderate(
         self,
@@ -160,9 +160,9 @@ class TestValidateGitCommitE2E:
             git_command='git commit -m "fixed stuff"',
         )
 
-        assert result.was_blocked or not result.succeeded, (
-            f"Invalid commit was allowed: {result.stdout}"
-        )
+        assert (
+            result.was_blocked or not result.succeeded
+        ), f"Invalid commit was allowed: {result.stdout}"
 
     def test_invalid_commit_allowed_moderate(
         self,
@@ -217,3 +217,83 @@ class TestValidateGitCommitE2E:
             )
 
             assert not result.was_blocked, f"Valid commit type blocked: {message}"
+
+
+class TestValidateGitPushE2E:
+    """E2E tests for push validation to protected branches."""
+
+    def test_push_to_main_blocked_strict(
+        self,
+        strict_settings: Path,
+    ) -> None:
+        """Push to main should be blocked in strict mode."""
+        result = run_git_via_claude(
+            project_dir=strict_settings,
+            git_command="git push origin main",
+        )
+
+        # PreToolUse hook should block this
+        assert (
+            result.was_blocked or not result.succeeded
+        ), f"Push to main was allowed: stdout={result.stdout}"
+
+    def test_push_to_master_blocked_strict(
+        self,
+        strict_settings: Path,
+    ) -> None:
+        """Push to master should be blocked in strict mode."""
+        result = run_git_via_claude(
+            project_dir=strict_settings,
+            git_command="git push origin master",
+        )
+
+        assert (
+            result.was_blocked or not result.succeeded
+        ), f"Push to master was allowed: stdout={result.stdout}"
+
+    def test_push_with_flags_to_main_blocked(
+        self,
+        strict_settings: Path,
+    ) -> None:
+        """Push with -u flag to main should still be blocked."""
+        result = run_git_via_claude(
+            project_dir=strict_settings,
+            git_command="git push -u origin main",
+        )
+
+        assert (
+            result.was_blocked or not result.succeeded
+        ), f"Push with flags to main was allowed: stdout={result.stdout}"
+
+    def test_push_to_feature_branch_allowed(
+        self,
+        strict_settings: Path,
+    ) -> None:
+        """Push to feature branch should be allowed."""
+        # First create the branch
+        run_git_via_claude(strict_settings, "git checkout -b feature/test-push")
+
+        result = run_git_via_claude(
+            project_dir=strict_settings,
+            git_command="git push origin feature/test-push",
+        )
+
+        # Should not be blocked (may fail for other reasons like no remote)
+        assert (
+            not result.was_blocked
+        ), f"Push to feature branch was blocked: {result.stderr}"
+
+    def test_push_to_main_allowed_moderate(
+        self,
+        moderate_settings: Path,
+    ) -> None:
+        """Push to main should warn but allow in moderate mode."""
+        result = run_git_via_claude(
+            project_dir=moderate_settings,
+            git_command="git push origin main",
+        )
+
+        # Should not be blocked in moderate mode (warns only)
+        assert (
+            not result.was_blocked
+        ), f"Push to main was blocked in moderate mode: {result.stderr}"

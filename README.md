@@ -9,7 +9,8 @@ This plugin guides Claude toward production-quality code by enforcing type safet
 - **Real-time diagnostics**: LSP integration with Ruff for instant feedback
 - **Type enforcement**: mypy --strict catches missing annotations as Claude codes
 - **Auto-formatting**: ruff + black applied on every file write
-- **Git conventions**: Branch names and commit messages validated before execution
+- **Git conventions**: Branch names, commit messages, and protected branch push validation
+- **Push protection**: Blocks direct pushes to main/master, enforcing PR workflows
 - **Python version aware**: Detects target Python version and adjusts rules accordingly
 - **`__future__` enforcement**: Requires `from __future__ import annotations` in strict mode
 - **Configurable strictness**: strict (block - default), moderate (warn), or minimal (format only)
@@ -253,6 +254,29 @@ Behavior by strictness level:
 See [TDD-006](docs/tdd/006-immutability-patterns.md) for implementation details and [ADR-013](docs/adr/013-immutability-safety-patterns.md) for rationale.
 
 See [TDD-001](docs/tdd/001-plugin-implementation.md) for complete templates.
+
+### Push Protection
+
+The plugin prevents direct pushes to protected branches (main/master), enforcing PR workflows:
+
+| Command | Action |
+|---------|--------|
+| `git push origin main` | Block |
+| `git push origin master` | Block |
+| `git push -u origin main` | Block |
+| `git push --force origin main` | Block |
+| `git push origin feature/foo` | Allow |
+| `git push origin v1.0.0` | Allow (tag) |
+
+Behavior by strictness level:
+
+| Level | Push to main/master |
+|-------|---------------------|
+| strict | Block with error |
+| moderate | Warn, allow push |
+| minimal | No validation |
+
+See [ADR-015](docs/adr/015-protected-branch-push-validation.md) for rationale.
 
 ### IDE Setup (VSCode)
 

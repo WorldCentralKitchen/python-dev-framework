@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| Status | Proposed |
+| Status | Accepted |
 | Date | 2026-01-02 |
 | Deciders | TBD |
 | Related | [ADR-002](002-two-layer-enforcement-model.md), [ADR-003](003-configuration-strictness-levels.md) |
@@ -66,7 +66,7 @@ Per [ADR-003](003-configuration-strictness-levels.md):
 
 ## Approval Checklist
 
-- [ ] Hook implementation tested with edge cases
-- [ ] Unit tests added
-- [ ] E2E test added
-- [ ] README updated
+- [x] Hook implementation tested with edge cases
+- [x] Unit tests added
+- [x] E2E test added
+- [x] README updated
