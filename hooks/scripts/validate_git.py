@@ -6,6 +6,7 @@ Behavior varies by strictness level.
 
 Note: PreToolUse hooks can block operations before execution using deny().
 """
+
 from __future__ import annotations
 
 import json

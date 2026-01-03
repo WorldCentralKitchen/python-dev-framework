@@ -7,6 +7,7 @@ Behavior varies by strictness level per ADR-002.
 Note: PostToolUse hooks react to completed operations. They cannot
 block execution (tool already ran) but can perform post-processing.
 """
+
 from __future__ import annotations
 
 import json

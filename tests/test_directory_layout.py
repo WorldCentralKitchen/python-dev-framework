@@ -113,7 +113,7 @@ class TestSLF001PerFileIgnores:
         # Create service.py that imports from utils
         service_file = internal_dir / "service.py"
         service_file.write_text(
-            "from __future__ import annotations\n" "\n" "from .utils import _helper\n"
+            "from __future__ import annotations\n\nfrom .utils import _helper\n"
         )
 
         # Should pass when using per-file-ignores pattern

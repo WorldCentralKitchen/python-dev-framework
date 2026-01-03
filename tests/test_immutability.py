@@ -28,7 +28,8 @@ def process(items: list[str] = []) -> None:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -47,7 +48,8 @@ def process(config: dict[str, int] = {}) -> None:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -66,7 +68,8 @@ def process(items: set[str] = set()) -> None:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -86,7 +89,8 @@ items: ContextVar[list[str]] = ContextVar("items", default=[])
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -108,7 +112,8 @@ class Config:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -163,7 +168,8 @@ class Config:
         # RUF008 is not auto-fixable - verify it's detected
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -195,7 +201,8 @@ process_tags("hello")
 
         result = subprocess.run(
             ["uv", "run", "mypy", "--strict", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -223,7 +230,8 @@ process_tags(["hello", "world"])
 
         result = subprocess.run(
             ["uv", "run", "mypy", "--strict", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -249,7 +257,8 @@ def process(items: list[str] | None = None) -> None:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -272,7 +281,8 @@ class Config:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -295,7 +305,8 @@ class Point:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 
@@ -317,7 +328,8 @@ def get_names(paths: Iterable[Path]) -> tuple[str, ...]:
 
         result = subprocess.run(
             ["uv", "run", "ruff", "check", str(file)],
-            check=False, capture_output=True,
+            check=False,
+            capture_output=True,
             text=True,
         )
 

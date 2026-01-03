@@ -42,9 +42,9 @@ class TestValidateGitBranchE2E:
         )
 
         # PreToolUse hook should block this
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Invalid branch allowed: stdout={result.stdout}, stderr={result.stderr}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Invalid branch allowed: stdout={result.stdout}, stderr={result.stderr}"
+        )
 
     def test_invalid_branch_allowed_moderate(
         self,
@@ -160,9 +160,9 @@ class TestValidateGitCommitE2E:
             git_command='git commit -m "fixed stuff"',
         )
 
-        assert (
-            result.was_blocked or not result.succeeded
-        ), f"Invalid commit was allowed: {result.stdout}"
+        assert result.was_blocked or not result.succeeded, (
+            f"Invalid commit was allowed: {result.stdout}"
+        )
 
     def test_invalid_commit_allowed_moderate(
         self,

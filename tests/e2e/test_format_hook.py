@@ -51,9 +51,9 @@ def foo(   x,y,   z):
 
         # Check formatting was applied (spaces around operators, etc.)
         # Note: Claude may add type hints, so check for either format
-        assert (
-            "def foo(x, y, z):" in content or "def foo(x:" in content
-        ), f"Not formatted: {content}"
+        assert "def foo(x, y, z):" in content or "def foo(x:" in content, (
+            f"Not formatted: {content}"
+        )
         assert "return x + y + z" in content, f"Not formatted: {content}"
 
     def test_non_python_file_unchanged(
@@ -138,9 +138,9 @@ def foo(x,y):
         assert "return x + y" in content, f"Black not applied: {content}"
 
         # Unused imports should still be present (ruff not run in minimal)
-        assert (
-            "import sys" in content
-        ), f"Ruff removed import in minimal mode: {content}"
+        assert "import sys" in content, (
+            f"Ruff removed import in minimal mode: {content}"
+        )
 
 
 class TestTypingEnforcementE2E:
