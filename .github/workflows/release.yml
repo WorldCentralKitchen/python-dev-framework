@@ -59,7 +59,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   update-marketplace:
-    name: Update Marketplace Version
+    name: Sync Plugin to Marketplace
     runs-on: ubuntu-latest
     needs: release
     # Only update marketplace for stable releases (not prereleases)
@@ -72,6 +72,11 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=${TAG#v}" >> $GITHUB_OUTPUT
 
+      - name: Checkout plugin repo
+        uses: actions/checkout@v4
+        with:
+          path: plugin
+
       - name: Checkout marketplace repo
         uses: actions/checkout@v4
         with:
@@ -79,11 +84,48 @@ jobs:
           token: ${{ secrets.MARKETPLACE_PAT }}
           path: marketplace
 
+      - name: Sync plugin essentials to marketplace
+        run: |
+          cd marketplace
+          rm -rf plugins/python-dev-framework
+          mkdir -p plugins/python-dev-framework
+
+          # Copy plugin essentials
+          cp -r $GITHUB_WORKSPACE/plugin/.claude-plugin plugins/python-dev-framework/
+          cp -r $GITHUB_WORKSPACE/plugin/hooks plugins/python-dev-framework/
+          cp -r $GITHUB_WORKSPACE/plugin/skills plugins/python-dev-framework/
+          cp $GITHUB_WORKSPACE/plugin/CLAUDE.md plugins/python-dev-framework/
+          cp $GITHUB_WORKSPACE/plugin/.lsp.json plugins/python-dev-framework/ 2>/dev/null || true
+
+          # Generate stub README
+          cat > plugins/python-dev-framework/README.md << 'EOF'
+          # python-dev-framework
+
+          This is a distribution copy. For full documentation and development:
+          - **Source repo**: https://github.com/WorldCentralKitchen/python-dev-framework
+          - **Deployment process**: See [marketplace README](../../README.md)
+          EOF
+
       - name: Update marketplace.json
         run: |
           cd marketplace
-          jq '(.plugins[] | select(.name == "python-dev-framework")).version = "${{ steps.version.outputs.version }}"' \
-            .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+          PLUGIN_NAME="python-dev-framework"
+          VERSION="${{ steps.version.outputs.version }}"
+
+          # Check if plugin exists in marketplace.json
+          if jq -e ".plugins[] | select(.name == \"$PLUGIN_NAME\")" .claude-plugin/marketplace.json > /dev/null 2>&1; then
+            # Update existing entry
+            jq "(.plugins[] | select(.name == \"$PLUGIN_NAME\")).version = \"$VERSION\"" \
+              .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+          else
+            # Add new entry
+            jq ".plugins += [{
+              \"name\": \"$PLUGIN_NAME\",
+              \"source\": \"./plugins/$PLUGIN_NAME\",
+              \"description\": \"Opinionated Python development enforcement for Claude Code\",
+              \"version\": \"$VERSION\"
+            }]" .claude-plugin/marketplace.json > tmp.json && mv tmp.json .claude-plugin/marketplace.json
+          fi
 
       - name: Create PR on marketplace
         uses: peter-evans/create-pull-request@v6
@@ -93,8 +135,15 @@ jobs:
           branch: update-python-dev-framework-${{ steps.version.outputs.tag }}
           title: "chore: update python-dev-framework to ${{ steps.version.outputs.tag }}"
           body: |
-            Automated PR to update python-dev-framework version.
+            Automated PR to update python-dev-framework version and sync plugin files.
 
             **Release:** ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}
             **Changelog:** ${{ github.server_url }}/${{ github.repository }}/blob/main/CHANGELOG.md
+
+            ### Files synced
+            - `.claude-plugin/`
+            - `hooks/`
+            - `skills/`
+            - `CLAUDE.md`
+            - `.lsp.json`
           commit-message: "chore: update python-dev-framework to ${{ steps.version.outputs.tag }}"

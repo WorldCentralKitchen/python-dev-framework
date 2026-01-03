@@ -47,14 +47,6 @@ claude plugin marketplace update WorldCentralKitchen
 claude plugin install python-dev-framework@WorldCentralKitchen
 ```
 
-### Pin to Specific Version
-
-```bash
-claude plugin marketplace add "https://oauth:$(gh auth token)@github.com/WorldCentralKitchen/wck-claude-plugins.git#v0.1.0"
-```
-
-> **Note:** Claude Code doesn't support private repo auth natively. The `gh auth token` workaround injects your GitHub credentials into the URL.
-
 ## Configuration
 
 Optional: Create `.claude/settings.json` to customize:
@@ -321,6 +313,18 @@ This enables:
 | Need to debug         | Run hook script manually              |
 
 See [ADR-007](docs/adr/007-plugin-dogfooding.md) for details.
+
+### Release & Distribution
+
+When a new version is tagged, the GitHub Action:
+
+1. Creates a GitHub Release
+2. Syncs plugin essentials to the [marketplace repo](https://github.com/WorldCentralKitchen/wck-claude-plugins):
+   - `.claude-plugin/`, `hooks/`, `skills/`, `CLAUDE.md`, `.lsp.json`
+3. Updates version in `marketplace.json`
+4. Opens a PR for review
+
+Users install the bundled copy from the marketplace, not directly from this repo. See the [plugin-versioning skill](skills/plugin-versioning/SKILL.md) for release procedures.
 
 ### Repository Structure
 ```

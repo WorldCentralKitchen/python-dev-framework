@@ -49,7 +49,9 @@ triggers:
 
 5. **Automated steps** (GitHub Action handles these)
    - Creates GitHub Release with auto-generated notes
-   - Opens PR on marketplace repo to update version
+   - Syncs plugin essentials to marketplace repo (`plugins/python-dev-framework/`)
+   - Updates version in `marketplace.json`
+   - Opens PR on marketplace repo
    - Human reviews and merges marketplace PR
 
 ## CHANGELOG Format
@@ -89,3 +91,22 @@ git tag v1.1.0-rc.1
 ```
 
 Pre-release tags follow semver format and can be used for testing before stable release.
+
+## Marketplace Distribution
+
+On release, the GitHub Action syncs plugin files to the marketplace repo:
+
+| Source | Destination |
+|--------|-------------|
+| `.claude-plugin/` | `plugins/python-dev-framework/.claude-plugin/` |
+| `hooks/` | `plugins/python-dev-framework/hooks/` |
+| `skills/` | `plugins/python-dev-framework/skills/` |
+| `CLAUDE.md` | `plugins/python-dev-framework/CLAUDE.md` |
+| `.lsp.json` | `plugins/python-dev-framework/.lsp.json` |
+
+**Note:** The `plugins/` directory in the marketplace repo is auto-generated. Do not edit directly.
+
+Users install from the marketplace (bundled copy), not from this repo:
+```bash
+claude plugin install python-dev-framework@WorldCentralKitchen
+```
