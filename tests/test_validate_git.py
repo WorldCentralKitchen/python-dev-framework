@@ -548,27 +548,21 @@ class TestExtractPushTarget:
 
 class TestParseRefspecDestination:
     def test_simple_branch(self) -> None:
-
         assert parse_refspec_destination("main") == "main"
 
     def test_head_to_main(self) -> None:
-
         assert parse_refspec_destination("HEAD:main") == "main"
 
     def test_branch_to_branch(self) -> None:
-
         assert parse_refspec_destination("feature/foo:main") == "main"
 
     def test_force_push_refspec(self) -> None:
-
         assert parse_refspec_destination("+HEAD:main") == "main"
 
     def test_force_push_branch_to_branch(self) -> None:
-
         assert parse_refspec_destination("+feature/foo:develop") == "develop"
 
     def test_feature_branch_refspec(self) -> None:
-
         assert parse_refspec_destination("HEAD:feature/bar") == "feature/bar"
 
 
