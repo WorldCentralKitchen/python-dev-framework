@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Directory layout enforcement via SLF001
 - Immutability pattern enforcement (B006, B039, RUF008, RUF012)
 - Comprehensive unit tests and E2E test framework
+- Plugin versioning skill with release workflow guidance
+- Automated release workflow (tag → GitHub Release → marketplace PR)
 
 ### Documentation
 
@@ -29,5 +31,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TDD-001 through TDD-006 documenting implementation details
 - README with installation and configuration instructions
 
-[Unreleased]: https://github.com/WorldCentralKitchen/wck-claude-plugins/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/WorldCentralKitchen/wck-claude-plugins/releases/tag/v0.1.0
+[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/WorldCentralKitchen/python-dev-framework/releases/tag/v0.1.0
