@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-01-02
+
+### Added
+
+- Push protection: blocks direct pushes to main/master branches
+- PR merge blocking: blocks `gh pr merge` commands (requires human approval)
+- ADR-015: Protected Branch Enforcement
+- TDD-007: Push and PR Merge Validation Patterns
+- E2E tests for push and merge validation
+
+### Changed
+
+- Plugin install instructions now include `--scope project` flag
+
 ## [0.4.0] - 2026-01-02
 
 ### Added
@@ -63,7 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TDD-001 through TDD-006 documenting implementation details
 - README with installation and configuration instructions
 
-[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.1.0...v0.2.0
