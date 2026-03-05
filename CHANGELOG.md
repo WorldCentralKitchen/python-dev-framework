@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-03-05
+
+### Fixed
+- Skill names updated to kebab-case for marketplace validation
+
 ## [0.5.4] - 2026-01-03
 
 ### Fixed
