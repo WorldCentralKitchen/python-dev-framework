@@ -1,5 +1,5 @@
 ---
-name: Python Development Standards
+name: python-development-standards
 description: This skill should be used when the user asks about "Python code style", "type hints", "structlog logging", "how to log", "code organization", "testing patterns", "error handling", or needs guidance on Python development best practices, project conventions, or coding standards for this project.
 ---
 

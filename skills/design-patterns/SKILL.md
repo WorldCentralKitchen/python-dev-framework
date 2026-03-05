@@ -1,5 +1,5 @@
 ---
-name: Python Design Patterns
+name: python-design-patterns
 description: >
   This skill should be used when the user asks about "design patterns",
   "SOLID principles", "factory pattern", "strategy pattern", "observer pattern",
