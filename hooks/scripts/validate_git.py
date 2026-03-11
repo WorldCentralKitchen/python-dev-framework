@@ -23,9 +23,6 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import PluginConfig, load_config
 
 
-PROTECTED_BRANCHES = frozenset({"main", "master"})
-
-
 def build_branch_pattern(branch_types: list[str]) -> re.Pattern[str]:
     """Build regex pattern for valid branch names."""
     types_pattern = "|".join(re.escape(t) for t in branch_types)
@@ -90,13 +87,47 @@ def output_approve() -> None:
     print(json.dumps({"decision": "approve"}))
 
 
+def suggest_branch_type(branch: str, valid_types: list[str]) -> str | None:
+    """Suggest the closest valid branch type for a mistyped branch.
+
+    Returns the suggested corrected branch name, or None.
+    """
+    if "/" not in branch:
+        return None
+
+    used_type, description = branch.split("/", 1)
+
+    # Common aliases/mistakes mapped to valid types
+    aliases: dict[str, str] = {
+        "fix": "bugfix",
+        "bug": "bugfix",
+        "feat": "feature",
+        "hot": "hotfix",
+        "ref": "refactor",
+        "doc": "docs",
+        "tests": "test",
+        "testing": "test",
+    }
+
+    suggested = aliases.get(used_type)
+    if suggested and suggested in valid_types:
+        return f"{suggested}/{description}"
+
+    # Check prefix match (e.g., "fea" -> "feature")
+    for valid_type in valid_types:
+        if valid_type.startswith(used_type) and used_type != valid_type:
+            return f"{valid_type}/{description}"
+
+    return None
+
+
 def validate_branch(branch: str, config: PluginConfig) -> tuple[bool, str | None]:
     """Validate branch name against pattern.
 
     Returns (is_valid, error_message).
     """
-    # Allow protected branches
-    if branch in ("main", "master", "develop"):
+    # Allow protected branches (and develop for common workflow)
+    if branch in config.protected_branches or branch == "develop":
         return True, None
 
     pattern = build_branch_pattern(config.branch_types)
@@ -105,6 +136,11 @@ def validate_branch(branch: str, config: PluginConfig) -> tuple[bool, str | None
 
     valid_types = ", ".join(config.branch_types)
     message = f"Use format: type/description where type is one of: {valid_types}"
+
+    suggestion = suggest_branch_type(branch, config.branch_types)
+    if suggestion:
+        message += f". Did you mean: {suggestion}"
+
     return False, message
 
 
@@ -172,7 +208,9 @@ def parse_refspec_destination(refspec: str) -> str:
     return spec
 
 
-def validate_push(refspec: str | None, cwd: str) -> tuple[bool, str | None]:
+def validate_push(
+    refspec: str | None, cwd: str, config: PluginConfig
+) -> tuple[bool, str | None]:
     """Validate push target.
 
     Returns (is_valid, error_message).
@@ -190,7 +228,7 @@ def validate_push(refspec: str | None, cwd: str) -> tuple[bool, str | None]:
         return True, None  # Can't determine, allow
 
     # Check if pushing to protected branch
-    if target in PROTECTED_BRANCHES:
+    if target in config.protected_branches:
         return False, "Direct push to protected branch. Create a PR instead."
 
     return True, None
@@ -275,7 +313,7 @@ def main() -> None:
     if "git push" in command:
         _remote, refspec = extract_push_target(command)
         cwd = context.get("cwd", ".")
-        is_valid, error_message = validate_push(refspec, cwd)
+        is_valid, error_message = validate_push(refspec, cwd, config)
         if handle_validation_result(is_valid, error_message, "Push blocked", config):
             return
 
