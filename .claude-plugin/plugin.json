@@ -1,6 +1,6 @@
 {
   "name": "python-dev-framework",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "description": "Opinionated Python development enforcement for Claude Code",
   "author": {
     "name": "World Central Kitchen"
