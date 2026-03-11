@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-11
+
+### Added
+
+- Branch type suggestions on validation errors (e.g., `fix/` → "Did you mean: `bugfix/`")
+- Configurable protected branches via `[tool.python-dev-framework].protected-branches` in `pyproject.toml`
+
 ## [0.5.5] - 2026-03-05
 
 ### Fixed
@@ -117,7 +124,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TDD-001 through TDD-006 documenting implementation details
 - README with installation and configuration instructions
 
-[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.5...v0.6.0
+[0.5.5]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/WorldCentralKitchen/python-dev-framework/compare/v0.5.1...v0.5.2
