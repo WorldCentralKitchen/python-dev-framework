@@ -47,7 +47,19 @@ log.info("event_name", user_id=123)
 ### Git Workflow
 - Branch types: feature/, bugfix/, hotfix/, refactor/, docs/, test/, chore/
 - Commit types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- Protected branches: main, master (always protected, plus any configured extras)
 - Keep commits atomic and focused
+
+### Protected Branches
+
+Configure additional protected branches in `pyproject.toml`:
+
+```toml
+[tool.python-dev-framework]
+protected-branches = ["staging", "sandbox"]
+```
+
+The `main` and `master` branches are always protected. This setting adds additional branches that will block direct pushes.
 
 ## Strictness Levels
 

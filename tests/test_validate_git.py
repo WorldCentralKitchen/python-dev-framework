@@ -29,11 +29,67 @@ from validate_git import (
     output_block,
     parse_refspec_destination,
     read_stdin_context,
+    suggest_branch_type,
     validate_branch,
     validate_commit,
     validate_gh_merge,
     validate_push,
 )
+
+
+DEFAULT_VALID_TYPES = [
+    "feature",
+    "bugfix",
+    "hotfix",
+    "refactor",
+    "docs",
+    "test",
+    "chore",
+]
+
+
+class TestSuggestBranchType:
+    def test_fix_suggests_bugfix(self) -> None:
+        result = suggest_branch_type("fix/login-error", DEFAULT_VALID_TYPES)
+        assert result == "bugfix/login-error"
+
+    def test_feat_suggests_feature(self) -> None:
+        result = suggest_branch_type("feat/add-auth", DEFAULT_VALID_TYPES)
+        assert result == "feature/add-auth"
+
+    def test_bug_suggests_bugfix(self) -> None:
+        result = suggest_branch_type("bug/null-pointer", DEFAULT_VALID_TYPES)
+        assert result == "bugfix/null-pointer"
+
+    def test_doc_suggests_docs(self) -> None:
+        result = suggest_branch_type("doc/update-readme", DEFAULT_VALID_TYPES)
+        assert result == "docs/update-readme"
+
+    def test_tests_suggests_test(self) -> None:
+        result = suggest_branch_type("tests/add-coverage", DEFAULT_VALID_TYPES)
+        assert result == "test/add-coverage"
+
+    def test_prefix_match_ref_suggests_refactor(self) -> None:
+        result = suggest_branch_type("ref/cleanup", DEFAULT_VALID_TYPES)
+        assert result == "refactor/cleanup"
+
+    def test_no_slash_returns_none(self) -> None:
+        result = suggest_branch_type("bad-branch", DEFAULT_VALID_TYPES)
+        assert result is None
+
+    def test_unknown_type_no_suggestion(self) -> None:
+        result = suggest_branch_type("random/something", DEFAULT_VALID_TYPES)
+        assert result is None
+
+    def test_valid_type_not_suggested(self) -> None:
+        result = suggest_branch_type("feature/add-auth", DEFAULT_VALID_TYPES)
+        assert result is None
+
+    def test_suggestion_preserves_description(self) -> None:
+        result = suggest_branch_type(
+            "fix/comment-resolved-status-enum", DEFAULT_VALID_TYPES
+        )
+        assert result == "bugfix/comment-resolved-status-enum"
 
 
 class TestBranchPattern:
@@ -160,6 +216,13 @@ class TestValidateBranch:
         assert not is_valid
         assert error is not None
         assert "type/description" in error
+
+    def test_invalid_branch_includes_suggestion(self) -> None:
+        config = PluginConfig()
+        is_valid, error = validate_branch("fix/login-bug", config)
+        assert not is_valid
+        assert error is not None
+        assert "Did you mean: bugfix/login-bug" in error
 
 
 class TestValidateCommit:
@@ -568,35 +631,58 @@ class TestParseRefspecDestination:
 
 class TestValidatePush:
     def test_push_to_main_blocked(self) -> None:
-        is_valid, error = validate_push("main", "/tmp")
+        config = PluginConfig()
+        is_valid, error = validate_push("main", "/tmp", config)
         assert not is_valid
         assert error is not None
         assert "protected branch" in error.lower()
 
     def test_push_to_master_blocked(self) -> None:
-        is_valid, error = validate_push("master", "/tmp")
+        config = PluginConfig()
+        is_valid, error = validate_push("master", "/tmp", config)
         assert not is_valid
         assert error is not None
 
     def test_push_to_feature_allowed(self) -> None:
-        is_valid, error = validate_push("feature/add-auth", "/tmp")
+        config = PluginConfig()
+        is_valid, error = validate_push("feature/add-auth", "/tmp", config)
         assert is_valid
         assert error is None
 
     def test_push_to_tag_allowed(self) -> None:
-        is_valid, error = validate_push("v1.0.0", "/tmp")
+        config = PluginConfig()
+        is_valid, error = validate_push("v1.0.0", "/tmp", config)
         assert is_valid
         assert error is None
 
     def test_bare_push_on_feature_branch(self) -> None:
+        config = PluginConfig()
         with patch("validate_git.get_current_branch", return_value="feature/foo"):
-            is_valid, _error = validate_push(None, "/tmp")
+            is_valid, _error = validate_push(None, "/tmp", config)
             assert is_valid
 
     def test_bare_push_on_main_blocked(self) -> None:
+        config = PluginConfig()
         with patch("validate_git.get_current_branch", return_value="main"):
-            is_valid, _error = validate_push(None, "/tmp")
+            is_valid, _error = validate_push(None, "/tmp", config)
             assert not is_valid
+
+    def test_push_to_custom_protected_branch_blocked(self) -> None:
+        config = PluginConfig(
+            protected_branches=frozenset({"main", "master", "staging"})
+        )
+        is_valid, error = validate_push("staging", "/tmp", config)
+        assert not is_valid
+        assert error is not None
+        assert "protected branch" in error.lower()
+
+    def test_push_to_non_protected_custom_allowed(self) -> None:
+        config = PluginConfig(
+            protected_branches=frozenset({"main", "master", "staging"})
+        )
+        is_valid, error = validate_push("develop", "/tmp", config)
+        assert is_valid
+        assert error is None
 
 
 class TestContainsGhPrMerge:
