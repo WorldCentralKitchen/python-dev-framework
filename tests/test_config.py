@@ -19,9 +19,11 @@ sys.path.insert(
 )
 
 from config import (
+    ALWAYS_PROTECTED_BRANCHES,
     DEFAULT_BRANCH_TYPES,
     DEFAULT_COMMIT_TYPES,
     PluginConfig,
+    detect_protected_branches,
     detect_python_version,
     load_config,
 )
@@ -285,3 +287,115 @@ class TestLoadConfigWithVersion:
 
         assert config.level == "moderate"
         assert config.target_python == "py310"
+
+
+class TestDetectProtectedBranches:
+    """Tests for protected branches detection from pyproject.toml."""
+
+    def test_default_protected_branches(self, tmp_path: Path) -> None:
+        """Default to main and master when no pyproject.toml."""
+
+        result = detect_protected_branches(tmp_path)
+        assert result == ALWAYS_PROTECTED_BRANCHES
+        assert "main" in result
+        assert "master" in result
+
+    def test_no_config_section_returns_defaults(self, tmp_path: Path) -> None:
+        """Return defaults when pyproject.toml exists but no plugin config."""
+
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text('[project]\nname = "test"')
+
+        result = detect_protected_branches(tmp_path)
+        assert result == ALWAYS_PROTECTED_BRANCHES
+
+    def test_additional_protected_branches(self, tmp_path: Path) -> None:
+        """Additional branches are merged with defaults."""
+
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.python-dev-framework]
+protected-branches = ["staging", "sandbox"]
+"""
+        )
+
+        result = detect_protected_branches(tmp_path)
+        assert "main" in result
+        assert "master" in result
+        assert "staging" in result
+        assert "sandbox" in result
+
+    def test_cannot_remove_default_branches(self, tmp_path: Path) -> None:
+        """User cannot remove main/master from protected branches."""
+
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.python-dev-framework]
+protected-branches = ["staging"]
+"""
+        )
+
+        result = detect_protected_branches(tmp_path)
+        # main and master are always protected
+        assert "main" in result
+        assert "master" in result
+        assert "staging" in result
+
+    def test_empty_protected_branches_keeps_defaults(self, tmp_path: Path) -> None:
+        """Empty list keeps defaults."""
+
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.python-dev-framework]
+protected-branches = []
+"""
+        )
+
+        result = detect_protected_branches(tmp_path)
+        assert result == ALWAYS_PROTECTED_BRANCHES
+
+    def test_invalid_toml_returns_defaults(self, tmp_path: Path) -> None:
+        """Invalid TOML returns default branches."""
+
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text("not valid toml [[[")
+
+        result = detect_protected_branches(tmp_path)
+        assert result == ALWAYS_PROTECTED_BRANCHES
+
+
+class TestLoadConfigWithProtectedBranches:
+    """Tests for load_config with protected branches detection."""
+
+    def test_loads_protected_branches_from_pyproject(self, tmp_path: Path) -> None:
+        """load_config should include detected protected_branches."""
+        # Create pyproject.toml with extra protected branches
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.python-dev-framework]
+protected-branches = ["staging"]
+"""
+        )
+
+        # Create .claude directory
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir()
+
+        with patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(tmp_path)}):
+            config = load_config(tmp_path)
+
+        assert "main" in config.protected_branches
+        assert "master" in config.protected_branches
+        assert "staging" in config.protected_branches
+
+    def test_default_protected_branches_when_no_pyproject(
+        self, temp_project_dir: Path
+    ) -> None:
+        """load_config defaults to main/master when no pyproject.toml."""
+
+        config = load_config(temp_project_dir)
+        assert config.protected_branches == ALWAYS_PROTECTED_BRANCHES

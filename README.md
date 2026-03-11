@@ -257,7 +257,7 @@ See [TDD-001](docs/tdd/001-plugin-implementation.md) for complete templates.
 
 ### Push Protection
 
-The plugin prevents direct pushes to protected branches (main/master), enforcing PR workflows:
+The plugin prevents direct pushes to protected branches, enforcing PR workflows:
 
 | Command | Action |
 |---------|--------|
@@ -268,10 +268,21 @@ The plugin prevents direct pushes to protected branches (main/master), enforcing
 | `git push origin feature/foo` | Allow |
 | `git push origin v1.0.0` | Allow (tag) |
 
+**Default protected branches:** `main`, `master` (always protected)
+
+**Configure additional protected branches** in `pyproject.toml`:
+
+```toml
+[tool.python-dev-framework]
+protected-branches = ["staging", "sandbox"]
+```
+
+This adds `staging` and `sandbox` to the protected list. The `main` and `master` branches cannot be removed from protection.
+
 Behavior by strictness level:
 
-| Level | Push to main/master |
-|-------|---------------------|
+| Level | Push to protected branches |
+|-------|----------------------------|
 | strict | Block with error |
 | moderate | Warn, allow push |
 | minimal | No validation |

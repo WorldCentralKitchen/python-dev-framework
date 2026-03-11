@@ -43,6 +43,9 @@ DEFAULT_COMMIT_TYPES = [
     "revert",
 ]
 
+# These branches are always protected and cannot be overridden
+ALWAYS_PROTECTED_BRANCHES: frozenset[str] = frozenset({"main", "master"})
+
 
 @dataclass
 class PluginConfig:
@@ -52,6 +55,9 @@ class PluginConfig:
     target_python: str = "py312"
     branch_types: list[str] = field(default_factory=lambda: DEFAULT_BRANCH_TYPES.copy())
     commit_types: list[str] = field(default_factory=lambda: DEFAULT_COMMIT_TYPES.copy())
+    protected_branches: frozenset[str] = field(
+        default_factory=lambda: ALWAYS_PROTECTED_BRANCHES
+    )
 
 
 def detect_python_version(project_root: Path) -> str:
@@ -95,6 +101,40 @@ def detect_python_version(project_root: Path) -> str:
     return "py312"
 
 
+def detect_protected_branches(project_root: Path) -> frozenset[str]:
+    """Detect protected branches from pyproject.toml.
+
+    Always includes main and master. Additional branches can be configured
+    via [tool.python-dev-framework].protected-branches in pyproject.toml.
+
+    Args:
+        project_root: Path to project root containing pyproject.toml
+
+    Returns:
+        Frozenset of protected branch names (always includes main, master)
+    """
+    pyproject = project_root / "pyproject.toml"
+    if not pyproject.exists():
+        return ALWAYS_PROTECTED_BRANCHES
+
+    try:
+        with pyproject.open("rb") as f:
+            data = tomllib.load(f)
+
+        extra = (
+            data.get("tool", {})
+            .get("python-dev-framework", {})
+            .get("protected-branches", [])
+        )
+        if extra:
+            return ALWAYS_PROTECTED_BRANCHES | frozenset(extra)
+
+    except (tomllib.TOMLDecodeError, OSError):
+        pass
+
+    return ALWAYS_PROTECTED_BRANCHES
+
+
 def load_config(project_root: Path | None = None) -> PluginConfig:
     """Load plugin configuration from consumer project settings.
 
@@ -113,9 +153,12 @@ def load_config(project_root: Path | None = None) -> PluginConfig:
         project_root = Path(project_dir)
 
     target_python = detect_python_version(project_root)
+    protected_branches = detect_protected_branches(project_root)
 
     if not settings_path.exists():
-        return PluginConfig(target_python=target_python)
+        return PluginConfig(
+            target_python=target_python, protected_branches=protected_branches
+        )
 
     try:
         data = json.loads(settings_path.read_text())
@@ -130,6 +173,9 @@ def load_config(project_root: Path | None = None) -> PluginConfig:
             target_python=target_python,
             branch_types=plugin_config.get("branch_types", DEFAULT_BRANCH_TYPES.copy()),
             commit_types=plugin_config.get("commit_types", DEFAULT_COMMIT_TYPES.copy()),
+            protected_branches=protected_branches,
         )
     except (json.JSONDecodeError, TypeError, KeyError):
-        return PluginConfig(target_python=target_python)
+        return PluginConfig(
+            target_python=target_python, protected_branches=protected_branches
+        )
